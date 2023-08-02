@@ -1,4 +1,4 @@
-![EVIE Logo](https://github.com/RimorRes/EVIE/assets/53187347/219c5a15-f85e-4d9a-b945-b3b7041c43c6)
+![EVIE Logo](https://github.com/RimorRes/EVIE/assets/53187347/cdf04e2f-5ea5-4ac3-a495-df8354b792df)
 
 # EVIE
 Software suite for AR headsets and HUDS.
