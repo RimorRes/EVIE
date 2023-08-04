@@ -14,8 +14,8 @@ class StereoCam:
             raise IOError('Cannot access stereo cameras.')
 
         # Resolution and rate of the camera frames (both L and R views stitched side by side)
-        self.frame_width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.frame_height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        self.frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
 
         # Map init for undistorting
@@ -24,7 +24,7 @@ class StereoCam:
         self.map2x, self.map2y = None, None
 
     def calibration_wizard(self, output_path, chessboard_size=(6, 6), square_size_mm=20):
-        w, h = int(self.frame_width / 2), int(self.frame_height)
+        w, h = self.frame_width // 2, self.frame_height
 
         # Take snapshots
         images = []
