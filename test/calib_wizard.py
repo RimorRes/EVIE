@@ -1,6 +1,6 @@
 import cv2
 import pyfiglet
-from stereocam import StereoCam
+from evie import StereoCam
 
 ascii_art = pyfiglet.figlet_format('EVIE', font='isometric1')
 print(ascii_art)
@@ -16,9 +16,11 @@ while True:
     left, right = cam.grab()
 
     key = cv2.waitKey(1)
+    if key == ord('s'):
+        cam.undistort = not cam.undistort
     if key == 27:
         cam.close()
         cv2.destroyAllWindows()
         break
 
-    cv2.imshow('Stereo Cam', cv2.addWeighted(left, 0.5, right, 0.5, 0))
+    cv2.imshow('Stereo Cam', left)

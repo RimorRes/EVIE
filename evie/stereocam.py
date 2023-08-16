@@ -3,6 +3,8 @@ import glob
 import cv2
 
 # TODO: add logging, warnings
+
+
 class StereoCam:
 
     def __init__(self, cam_id):
@@ -23,11 +25,11 @@ class StereoCam:
         self.map1x, self.map1y = None, None
         self.map2x, self.map2y = None, None
 
-    def calibration_wizard(self, output_path, chessboard_size=(6, 6), square_size_mm=20):
+    def calibration_wizard(self, output_path, chessboard_size=(9, 6), square_size_mm=20):
         w, h = self.frame_width // 2, self.frame_height
 
         # Take snapshots
-        images = []
+        num = 0
         while self.cap.isOpened():
             ret, frame = self.cap.read()
             key = cv2.waitKey(1)
@@ -36,8 +38,9 @@ class StereoCam:
                 cv2.destroyAllWindows()
                 break
             elif key == ord('s'):
-                images.append(frame)
+                cv2.imwrite('cal' + str(num) + '.png', frame)
                 print('Image saved!')
+                num += 1
 
             cv2.imshow('Stereo Cam', cv2.resize(frame, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA))
 
@@ -55,9 +58,11 @@ class StereoCam:
         img_points1 = []  # 2d points in image plane for cam 1.
         img_points2 = []  # 2d points in image plane for cam 2.
 
-        for frame in images:
-
+        images = glob.glob('*.png')  # TODO: clean-up file creation
+        for fpath in images:
+            frame = cv2.imread(fpath)
             img_1, img_2 = self.cut(frame)
+
             gray_1 = cv2.cvtColor(img_1, cv2.COLOR_BGR2GRAY)
             gray_2 = cv2.cvtColor(img_2, cv2.COLOR_BGR2GRAY)
 
@@ -66,17 +71,18 @@ class StereoCam:
             ret_2, corners_2 = cv2.findChessboardCorners(gray_2, chessboard_size, None)
 
             # If found, add object points, image points (after refining them)
-            if ret_1 and ret_2:
+            if ret_2 and ret_2:
+                print(fpath, 'is valid')
                 obj_points.append(objp)
                 refine_corners_1 = cv2.cornerSubPix(gray_1, corners_1, (11, 11), (-1, -1), criteria)
                 img_points1.append(refine_corners_1)
-                refine_corners_2 = cv2.cornerSubPix(gray_1, corners_2, (11, 11), (-1, -1), criteria)
+                refine_corners_2 = cv2.cornerSubPix(gray_2, corners_2, (11, 11), (-1, -1), criteria)
                 img_points2.append(refine_corners_2)
 
                 # Draw and display the corners
                 cv2.drawChessboardCorners(img_1, chessboard_size, refine_corners_1, ret_1)
                 cv2.imshow('Image 1', img_1)
-                cv2.drawChessboardCorners(img_2, chessboard_size, refine_corners_1, ret_1)
+                cv2.drawChessboardCorners(img_2, chessboard_size, refine_corners_2, ret_2)
                 cv2.imshow('Image 2', img_2)
                 cv2.waitKey(1000)
 
@@ -98,7 +104,7 @@ class StereoCam:
         if not ret:
             raise RuntimeError('Stereo camera calibration failed.')
         else:
-            np.savez(output_path, mtx1, dist1, mtx2, dist2, r, t)
+            np.savez(output_path, mtx1=mtx1, dist1=dist1, mtx2=mtx2, dist2=dist2, r=r, t=t)
 
     def load_calibration(self, fpath):
         data = np.load(fpath)
@@ -109,12 +115,12 @@ class StereoCam:
         r = data['r']
         t = data['t']
 
-        w, h = self.frame_width/2, self.frame_height
+        w, h = self.frame_width // 2, self.frame_height
 
         r1, r2, p1, p2, q, roi1, roi2 = cv2.stereoRectify(mtx1, dist1, mtx2, dist2, (w, h), r, t)
 
-        self.map1x, self.map1y = cv2.initUndistortRectifyMap(mtx1, dist1, r1, p1, (w, h), cv2.INTER_LINEAR)
-        self.map2x, self.map2y = cv2.initUndistortRectifyMap(mtx2, dist2, r2, p2, (w, h), cv2.INTER_LINEAR)
+        self.map1x, self.map1y = cv2.initUndistortRectifyMap(mtx1, dist1, r1, p1, (w, h), 5)
+        self.map2x, self.map2y = cv2.initUndistortRectifyMap(mtx2, dist2, r2, p2, (w, h), 5)
 
     def __del__(self):
         self.cap.release()
@@ -122,14 +128,14 @@ class StereoCam:
     def close(self):
         self.cap.release()
 
-    def cut(self, frame):
+    def cut(self, full_frame):
         """
         Cuts captured frame into both left and right views
-        :param frame: captured frame (side-by-side stitched views)
+        :param full_frame: captured frame (side-by-side stitched views)
         :return: img_l, img_r
         """
         mid = self.frame_width // 2
-        img_l, img_r = frame[:, :mid, :], frame[:, mid:, :]
+        img_l, img_r = full_frame[:, :mid, :], full_frame[:, mid:, :]
 
         return img_l, img_r
 
@@ -140,7 +146,7 @@ class StereoCam:
             # Split both right and left images
             img_l, img_r = self.cut(frame)
 
-            if self.undistort:
+            if self.undistort:  # TODO: see if cv2.fisheye rectification works better
                 img_l = cv2.remap(img_l, self.map1x, self.map1y, cv2.INTER_LINEAR)
                 img_r = cv2.remap(img_r, self.map2x, self.map2y, cv2.INTER_LINEAR)
 
