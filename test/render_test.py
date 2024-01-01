@@ -4,6 +4,8 @@ from PIL import ImageTk, Image
 import time
 
 
+# TODO: Multithreading! go see:
+# TODO: https://stackoverflow.com/questions/62576326/python3-process-and-display-webcam-stream-at-the-webcams-fps
 root = tk.Tk()
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.overrideredirect(1)
@@ -49,7 +51,7 @@ CARD.scale *= 1
 SCENE.add(AXES)
 SCENE.add(RET)
 SCENE.add(SQ)
-# SCENE.add(CARD)
+SCENE.add(CARD)
 
 a = np.linspace(-np.pi, np.pi, 100)
 
