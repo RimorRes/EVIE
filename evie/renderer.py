@@ -1,25 +1,22 @@
 import numpy as np
 from bisect import insort
-from PIL import Image
+from PIL import Image, ImageDraw
 from scipy.spatial.transform import Rotation
 
 
-def get_perspective_transform_coeffs(dst, src):
-    print(src, dst)
-    #  Math for perspective transform:
-    #  https://web.archive.org/web/20150222120106/xenia.media.mit.edu/~cwren/interpolator/
+def get_perspective_transform_coeffs(src, dst):
     in_matrix = []
-    for (x, y), (X, Y) in zip(src, dst):
+    for (X, Y), (x, y) in zip(src, dst):
         in_matrix.extend([
             [x, y, 1, 0, 0, 0, -X * x, -X * y],
             [0, 0, 0, x, y, 1, -Y * x, -Y * y],
         ])
 
     a = np.matrix(in_matrix, dtype=np.float64)
-    b = np.array(dst).reshape(8)
-    cf = np.dot(np.linalg.inv(a.T * a) * a.T, b)
+    b = np.array(src).reshape(8)
+    af = np.dot(np.linalg.inv(a.T * a) * a.T, b)
 
-    return np.array(cf).reshape(8)
+    return np.array(af).reshape(8)
 
 
 class Scene:
@@ -27,7 +24,7 @@ class Scene:
     def __init__(self):
         self.objects = []
 
-    def pack(self, obj):
+    def add(self, obj):
         # Insert, objects sorted by ascending z-depth
         insort(self.objects, obj, key=lambda x: x.pos[2])
 
@@ -35,18 +32,13 @@ class Scene:
         # TODO: figure out a solution for z-hierarchy of clipping objects
         out = Image.new('RGBA', active_camera.resolution)
 
+        # TODO: Remove this temp screen center marker
+        draw = ImageDraw.Draw(out)
+        rx, ry = active_camera.resolution
+        draw.ellipse((rx/2-2, ry/2-2, rx/2+2, ry/2+2), fill='white')
+
         for obj in self.objects[::-1]:  # display according to descending z-order
-            vertices = obj.get_vertices()
-            w, h = obj.image.size
-            src_points = [(0, 0), (w, 0), (0, h), (w, h)]
-            dst_points = []
-            for v in vertices:
-                dst_points.append(active_camera.project(v))
-
-            coeffs = get_perspective_transform_coeffs(src_points, dst_points)
-
-            layer = obj.image.transform(active_camera.resolution, Image.PERSPECTIVE, coeffs, Image.BICUBIC)
-            layer = layer.convert('RGBA')
+            layer = obj.draw(active_camera)
             out = Image.alpha_composite(out, layer)
 
         return out
@@ -55,23 +47,27 @@ class Scene:
 class VirtualCamera:
     #  Camera projection matrix explanations:
     #  https://www.cs.cmu.edu/~16385/s17/Slides/11.1_Camera_matrix.pdf
-    def __init__(self, resolution, intrinsic_matrix, pos=None, rot=None):
+    def __init__(self, resolution, focal_length, sensor_width):
         self.resolution = resolution
-        self.k_matrix = intrinsic_matrix
-        if pos:
-            self._pos = pos
-        else:
-            self._pos = np.zeros(3)
-        if rot:
-            self._rot = rot
-        else:
-            self._rot = np.zeros(3)
+        self.ar = self.resolution[0] / self.resolution[1]  # Camera aspect ratio
+        self.f = focal_length
+        self.s = (sensor_width, sensor_width / self.ar)  # Sensor dimensions (SI units)
+        self.fov = 2 * np.arctan(sensor_width / (2 * focal_length))  # Camera FOV
+
+        sx, sy = self.s
+        self.k_matrix = np.matrix([  # camera intrinsic matrix
+            [f, 0, -sx/2],  # f, 0, px
+            [0, f, -sy/2],  # 0, f, py
+            [0, 0, 1]    # 0, 0, 1
+        ])
+
+        self._pos = np.zeros(3)
+        self._rot = np.identity(3)  # Rotation matrix
 
         self.p_matrix = self.get_projection_matrix()
 
     def get_projection_matrix(self):
-        r = Rotation.from_euler('zyx', self._rot).as_matrix()
-        p = self.k_matrix * r * np.c_[np.identity(3), - self._pos]
+        p = self.k_matrix * self._rot * np.c_[np.identity(3), - self._pos]
 
         return p
 
@@ -90,45 +86,48 @@ class VirtualCamera:
 
     @rot.setter
     def rot(self, angles):
-        self._rot = np.array(angles)
+        self._rot = Rotation.from_euler('xyz', angles).as_matrix()
         self.p_matrix = self.get_projection_matrix()
 
     def project(self, vertex):
+        # Source: https://en.wikipedia.org/wiki/3D_projection
         h_coords = np.r_[vertex, 1].reshape((4, 1))  # Get world homogenous coordinates
-        x, y, z = np.asarray(self.p_matrix * h_coords).flatten()  # Get image homogenous coords
-        return np.array((x, y))/z
+        fx, fy, fw = np.asarray(self.p_matrix * h_coords).flatten()  # Get normalized image homogenous coords
+
+        rx, ry = self.resolution  # Grab the resolution
+        sx, sy = self.s  # Grab sensor dimensions
+        # Transform homogenous coords to screen coords
+        # Scale normalized coords to sensor size then to pixel resolution
+        bx = -(fx/fw) * (rx/sx)
+        by = -(fy/fw) * (ry/sy)
+
+        return np.array((bx, by))  # Returns viewing plane coords
 
 
-class ImagePlane:
+class Object:
 
-    def __init__(self, image, size, pos=None, rot=None):
-        self.image = image
-        self.phys_size = size  # Physical size
-        if pos:
-            self._pos = pos  # Center of image
-        else:
-            self._pos = np.zeros(3)
-        if rot:
-            self._rot = rot
-        else:
-            self._rot = np.zeros(3)
+    def __init__(self, vertices):
+        self._pos = np.zeros(3)
+        self._rot = Rotation.from_matrix(np.identity(3))  # Rotation matrix
+        self._scale = np.ones(3)
+
+        self.loc_verts = np.array(vertices)  # Make sure the vertices iterable is an array
+        self.vertices = self.get_vertices()
 
     def get_vertices(self):
-        w, h = self.phys_size
-
-        # 2D coords relative to plane center
-        x = np.linspace(-1, 1, 2) * w/2
-        y = np.linspace(-1, 1, 2) * h/2
-        # 3D coords relative to plane center
-        vertices = np.dstack((np.dstack(np.meshgrid(x, y)), np.zeros((2, 2))))
-
-        # Rotate
-        r = Rotation.from_euler('zyx', self._rot)
-        vertices = r.apply(vertices.reshape(4, 3))
+        """
+        Calculate every vertex's world coordinates.
+        Only called when position, rotation or scale are changed.
+        :return: coords
+        """
+        # Scale in LOCAL COORDS
+        verts = self.loc_verts * self._scale
+        # Rotate these around LOCAL ORIGIN (haven't applied global translation yet)
+        verts = self._rot.apply(verts)
         # Translate
-        vertices += self._pos
+        verts += self._pos
 
-        return vertices
+        return verts
 
     @property
     def pos(self):
@@ -137,6 +136,7 @@ class ImagePlane:
     @pos.setter
     def pos(self, position):
         self._pos = np.array(position)
+        self.vertices = self.get_vertices()
 
     @property
     def rot(self):
@@ -144,29 +144,158 @@ class ImagePlane:
 
     @rot.setter
     def rot(self, angles):
-        self._rot = np.array(angles)
+        self._rot = Rotation.from_euler('xyz', angles)
+        self.vertices = self.get_vertices()
+
+    @property
+    def scale(self):
+        return self._scale
+
+    @scale.setter
+    def scale(self, scales):
+        self._scale = np.array(scales)
+        self.vertices = self.get_vertices()
+
+
+class Reticle:
+
+    def __init__(self):
+        self.pos = np.zeros(3)
+
+    def draw(self, active_cam):
+        layer = Image.new('RGBA', active_cam.resolution)
+        drawer = ImageDraw.Draw(layer)
+
+        cx, cy = active_cam.project(self.pos)
+        drawer.ellipse((cx-10, cy-10, cx+10, cy+10), outline='white')
+
+        return layer
+
+    @property
+    def depth(self):
+        return self.pos[2]
+
+    @depth.setter
+    def depth(self, value):
+        self.pos[2] = value
+
+
+class Axes(Object):
+    
+    def __init__(self):
+        super().__init__(np.identity(3))
+
+    def draw(self, active_cam):
+        """
+        Draw this object as seen by the active camera
+        :param active_cam:
+        :return:
+        """
+        layer = Image.new('RGBA', active_cam.resolution)
+        drawer = ImageDraw.Draw(layer)
+
+        loc_org = tuple(active_cam.project(self._pos))  # Grab axes coords in screen space
+        colors = ('red', 'green', 'blue')
+        # Draw avery axis
+        for i in range(len(self.vertices)):
+            col = colors[i]
+            point = tuple(active_cam.project(self.vertices[i]))  # Project to screen space
+            drawer.line((loc_org, point), fill=col, width=1)
+
+        return layer
+    
+
+class WireSquare(Object):
+
+    def __init__(self):
+        verts = np.array([
+            [1, 1, 0],
+            [-1, 1, 0],
+            [-1, -1, 0],
+            [1, -1, 0]
+        ], dtype=np.float_)
+        super().__init__(verts)
+
+    def draw(self, active_cam):
+        """
+        Draw this object as seen by the active camera
+        :param active_cam:
+        :return:
+        """
+        layer = Image.new('RGBA', active_cam.resolution)
+        drawer = ImageDraw.Draw(layer)
+
+        points = []  # Screen space points
+        for v in self.vertices:
+            points.append(tuple(active_cam.project(v)))  # Project to screen space
+
+        drawer.polygon(points, outline='white')
+
+        return layer
+
+
+# TODO: switch perspective transfrom to ImageOps.deform
+class ImagePlane(Object):
+
+    def __init__(self, image):
+        verts = np.array([
+            [1, 1, 0],
+            [-1, 1, 0],
+            [-1, -1, 0],
+            [1, -1, 0]
+        ], dtype=np.float_)
+        super().__init__(verts)
+        self.image = image
+
+    def draw(self, active_cam):
+        w, h = self.image.size
+        src_points = [(0, 0), (w, 0), (w, h), (0, h)]
+        dst_points = []
+        for v in self.vertices:
+            dst_points.append(tuple(active_cam.project(v)))
+
+        coeffs = get_perspective_transform_coeffs(src_points, dst_points)
+
+        layer = self.image.transform(active_cam.resolution, Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+        layer = layer.convert('RGBA')
+
+        return layer
 
 
 f = 50e-3  # 50mm focal length
+s = 36e-3  # 36mm sensor width
 res = (960, 960)
-px = res[0]/2
-py = res[1]/2
-k = 960
-cam_matrix = np.matrix([
-    [f*k, 0, px],
-    [0, f*k, py],
-    [0, 0, 1]
-])
-
-img = Image.open('../res/img.png')
-phys_size = (1, 1)
 
 SCENE = Scene()
-CAM = VirtualCamera(res, cam_matrix)
-LENNA = ImagePlane(img, phys_size)
-LENNA.pos = (0, 0, 0.1)
-LENNA.rot = (0, np.pi/16, 0)  # TODO: fix rotation
+CAM_L = VirtualCamera(res, f, s)
+CAM_R = VirtualCamera(res, f, s)
+CAM_L.pos = np.array([30e-3, 0, 0])
+CAM_R.pos = np.array([-30e-3, 0, 0])
 
-SCENE.pack(LENNA)
-res = SCENE.render(CAM)
+RET = Reticle()
+RET.depth = 0.5
+
+AXES = Axes()
+AXES.pos = np.array([0, 0, 5])
+AXES.rot = np.array([0, 0, 0])
+
+SQ = WireSquare()
+SQ.pos = np.array([0, 0, 5])
+SQ.rot = np.array([0, 0, 0])
+SQ.scale *= 1
+
+img = Image.open('../res/img.png').convert('RGBA')
+LENNA = ImagePlane(img)
+LENNA.pos = (0, 0, 50)
+LENNA.rot = (0, 0, 0)
+LENNA.scale *= 5
+
+SCENE.add(AXES)
+SCENE.add(RET)
+SCENE.add(SQ)
+SCENE.add(LENNA)
+
+res_L = SCENE.render(CAM_L)
+res_R = SCENE.render(CAM_R)
+res = Image.blend(res_L, res_R, 0.5)
 res.show('Render')

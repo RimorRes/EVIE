@@ -3,7 +3,6 @@ from PIL import ImageTk, Image
 
 
 # TODO: fullscreen, blend video stream and AR objects, add overlays
-
 root = tk.Tk()
 w, h = root.winfo_screenwidth(), root.winfo_screenheight()
 root.overrideredirect(1)
@@ -15,15 +14,8 @@ canvas = tk.Canvas(root, width=w, height=h, bd=0, highlightthickness=0)
 canvas.pack()
 canvas.configure(background='black')
 
-
-def showPIL(pilImage):
-    if imgWidth > w or imgHeight > h:
-        ratio = min(w/imgWidth, h/imgHeight)
-        imgWidth = int(imgWidth*ratio)
-        imgHeight = int(imgHeight*ratio)
-        pilImage = pilImage.resize((imgWidth,imgHeight), Image.ANTIALIAS)
-    image = ImageTk.PhotoImage(pilImage)
-    imagesprite = canvas.create_image(w/2,h/2,image=image)
-
+img = Image.open('../res/test_card.jpg')
+image = ImageTk.PhotoImage(img)
+imagesprite = canvas.create_image(w/2, h/2, image=image)
 
 root.mainloop()
