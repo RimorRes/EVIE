@@ -56,9 +56,9 @@ class VirtualCamera:
 
         sx, sy = self.s
         self.k_matrix = np.matrix([  # camera intrinsic matrix
-            [f, 0, -sx/2],  # f, 0, px
-            [0, f, -sy/2],  # 0, f, py
-            [0, 0, 1]    # 0, 0, 1
+            [focal_length, 0, -sx/2],   # f, 0, px
+            [0, focal_length, -sy/2],   # 0, f, py
+            [0, 0, 1]                   # 0, 0, 1
         ])
 
         self._pos = np.zeros(3)
@@ -238,12 +238,14 @@ class WireSquare(Object):
 class ImagePlane(Object):
 
     def __init__(self, image):
+        w, h = image.size
         verts = np.array([
-            [1, 1, 0],
-            [-1, 1, 0],
-            [-1, -1, 0],
-            [1, -1, 0]
+            [w, h, 0],
+            [-w, h, 0],
+            [-w, -h, 0],
+            [w, -h, 0]
         ], dtype=np.float_)
+        verts /= max(w, h)
         super().__init__(verts)
         self.image = image
 
@@ -260,42 +262,3 @@ class ImagePlane(Object):
         layer = layer.convert('RGBA')
 
         return layer
-
-
-f = 50e-3  # 50mm focal length
-s = 36e-3  # 36mm sensor width
-res = (960, 960)
-
-SCENE = Scene()
-CAM_L = VirtualCamera(res, f, s)
-CAM_R = VirtualCamera(res, f, s)
-CAM_L.pos = np.array([30e-3, 0, 0])
-CAM_R.pos = np.array([-30e-3, 0, 0])
-
-RET = Reticle()
-RET.depth = 0.5
-
-AXES = Axes()
-AXES.pos = np.array([0, 0, 5])
-AXES.rot = np.array([0, 0, 0])
-
-SQ = WireSquare()
-SQ.pos = np.array([0, 0, 5])
-SQ.rot = np.array([0, 0, 0])
-SQ.scale *= 1
-
-img = Image.open('../res/img.png').convert('RGBA')
-LENNA = ImagePlane(img)
-LENNA.pos = (0, 0, 50)
-LENNA.rot = (0, 0, 0)
-LENNA.scale *= 5
-
-SCENE.add(AXES)
-SCENE.add(RET)
-SCENE.add(SQ)
-SCENE.add(LENNA)
-
-res_L = SCENE.render(CAM_L)
-res_R = SCENE.render(CAM_R)
-res = Image.blend(res_L, res_R, 0.5)
-res.show('Render')
