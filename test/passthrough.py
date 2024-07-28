@@ -21,6 +21,7 @@ y = max((frame_height - screen_height) // 2, 0)
 
 print(frame_width, 'x', frame_height, '@', fps)
 
+
 def grab():
     ret, frame = cap.read()
 
