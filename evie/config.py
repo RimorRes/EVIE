@@ -3,14 +3,14 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 
-SCREEN_WIDTH = 2560
-SCREEN_HEIGHT = 1440
+SCREEN_WIDTH = 1440
+SCREEN_HEIGHT = 2560
 
 vertex_dtype = np.dtype({
-    'names': ['x', 'y', 'z', 'rgba'],
-    'formats': [np.float32, np.float32, np.float32, np.uint32],
-    'offsets': [0, 4, 8, 12],
-    'itemsize': 16
+    'names': ['x', 'y', 'z', 'rgba', 's', 't'],
+    'formats': [np.float32, np.float32, np.float32, np.uint32, np.float32, np.float32],
+    'offsets': [0, 4, 8, 12, 16, 20],
+    'itemsize': 24  # 6 * 4 bytes
 })
 
 

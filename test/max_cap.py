@@ -1,31 +1,55 @@
 import time
 from picamera2 import Picamera2
 
-# TODO: Asynchronous capture. Make sure we can capture at 50fps MINIMUM.
-# TODO: try having seperate threads for seperate cameras
 
-picam2 = Picamera2()
+def init_cam(camera_index):
+    picam = Picamera2(camera_index)
+    config = picam.create_video_configuration(main={"size": (1440, 1280)})
+    picam.align_configuration(config)
+    picam.configure(config)
+    picam.set_controls({"FrameRate": 56})
 
-config = picam2.create_video_configuration(main={"size": (2304, 1296)})
-# config = picam2.create_video_configuration(main={"size": (1440, 1280)})
-picam2.align_configuration(config)
-print(config["main"])
+    return picam
 
-picam2.configure(config)
-picam2.set_controls({"FrameRate": 56})
-picam2.start()
 
-frames = []
-start = time.time()
-duration = 10
+def add_buffer_0(job):
+    im = cam0.wait(job)
+    frames_0.append(im)
 
-while time.time() - start < duration:
-    im = picam2.capture_array()
-    frames.append(im)
-    # cv2.imshow("Camera", im)
-    # cv2.waitKey(1)
 
-picam2.stop()
-print("Numbers of frames captured:", len(frames))
-print("in {} seconds".format(duration))
-print("FPS:", len(frames) / duration)
+def add_buffer_1(job):
+    im = cam1.wait(job)
+    frames_1.append(im)
+
+
+if __name__ == "__main__":
+    duration = 10
+
+    cam0 = init_cam(0)
+    cam1 = init_cam(1)
+
+    frames_0 = []
+    frames_1 = []
+
+    cam0.start()
+    cam1.start()
+
+    start = time.time()
+    while time.time() - start < duration:
+        frame0 = cam0.capture_array(wait=False, signal_function=add_buffer_0)
+        frame1 = cam1.capture_array(wait=True, signal_function=add_buffer_1)
+        # print("time:", time.time() - start)
+
+    print("Capture done...")
+    print("Waiting for fuck all to finish >:(")
+
+    time.sleep(1)
+
+    cam0.close()
+    cam1.close()
+
+    n = len(frames_0) + len(frames_1)
+    print("Numbers of frames camera 0:", len(frames_0))
+    print("Numbers of frames camera 1:", len(frames_1))
+    print("in {} seconds".format(duration))
+    print("FPS:", n/2 / duration)

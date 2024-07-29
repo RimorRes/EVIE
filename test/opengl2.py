@@ -17,7 +17,7 @@ def main():
     pygame.display.set_mode((w, h), DOUBLEBUF | OPENGL | FULLSCREEN, vsync=1)
     ipd = 63e-3
 
-    model = OBJ('../res/untitled.obj')
+    model = OBJ('../assets/models/untitled.obj')
 
     last = time.time()
     sample = 100

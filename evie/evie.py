@@ -52,7 +52,7 @@ class App:
             raise Exception("Failed to create window")
 
         glfw.make_context_current(self.window)
-        glfw.swap_interval(0)
+        glfw.swap_interval(1)
 
         glfw.set_input_mode(self.window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN)
 
@@ -66,9 +66,15 @@ class App:
         glEnable(GL_LINE_SMOOTH)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        self.shader = create_shader_program("../assets/shaders/vertex.vert", "../assets/shaders/fragment.frag")
         self.triangle_vbo, self.triangle_vao = mesher.build_triangle_mesh()
         self.quad_ebo, self.quad_vbo, self.quad_vao = mesher.build_quad_mesh()
-        self.shader = create_shader_program("../shaders/vertex.vert", "../shaders/fragment.frag")
+        self.test_tex1 = mesher.Material("../assets/textures/RCA_Indian_Head_Test_Pattern.png")
+        self.test_tex2 = mesher.Material("../assets/textures/Philips_PM5544_Test_Pattern.png")
+
+        glUseProgram(self.shader)
+        glUniform1i(glGetUniformLocation(self.shader, "imageTexture"), 0)
 
         # Initialise timers
         self.t = glfw.get_time()
@@ -88,6 +94,11 @@ class App:
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glUseProgram(self.shader)
 
+            if self.frame_counter % 10 == 0:
+                self.test_tex1.use()
+            else:
+                self.test_tex2.use()
+
             # Render to the left half of the screen
             glViewport(0, 0, SCREEN_WIDTH // 2, SCREEN_HEIGHT)
             glBindVertexArray(self.quad_vao)
@@ -98,9 +109,9 @@ class App:
             # Render to the right half of the screen
             glViewport(SCREEN_WIDTH // 2, 0, SCREEN_WIDTH // 2, SCREEN_HEIGHT)
             glBindVertexArray(self.quad_vao)
-            glDrawElements(GL_LINE_LOOP, 6, GL_UNSIGNED_BYTE, ctypes.c_void_p(0))
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, ctypes.c_void_p(0))
             glBindVertexArray(self.triangle_vao)
-            glDrawArrays(GL_LINE_LOOP, 0, 3)
+            glDrawArrays(GL_TRIANGLES, 0, 3)
 
             glfw.swap_buffers(self.window)
 
