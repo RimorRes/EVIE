@@ -7,7 +7,8 @@ in vec2 fragmentTexCoord;
 out vec4 screenColor;
 
 uniform sampler2D imageTexture;
+uniform vec4 baseColor;
 
 void main() {
-    screenColor = fragmentColor * texture(imageTexture, fragmentTexCoord);
+    screenColor = baseColor * texture(imageTexture, fragmentTexCoord );
 }

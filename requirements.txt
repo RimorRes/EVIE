@@ -1,8 +1,9 @@
 numpy
+PyGLM
+scipy
 opencv-python >= 3.0.0
 PyOpenGL
 glfw
 pillow
 pyfiglet
-pygame
 picamera2

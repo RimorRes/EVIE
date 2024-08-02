@@ -70,8 +70,7 @@ class App:
         self.shader = create_shader_program("../assets/shaders/vertex.vert", "../assets/shaders/fragment.frag")
         self.triangle_vbo, self.triangle_vao = mesher.build_triangle_mesh()
         self.quad_ebo, self.quad_vbo, self.quad_vao = mesher.build_quad_mesh()
-        self.test_tex1 = mesher.Material("../assets/textures/RCA_Indian_Head_Test_Pattern.png")
-        self.test_tex2 = mesher.Material("../assets/textures/Philips_PM5544_Test_Pattern.png")
+        self.test_tex = mesher.Material("../assets/textures/RCA_Indian_Head_Test_Pattern.png")
 
         glUseProgram(self.shader)
         glUniform1i(glGetUniformLocation(self.shader, "imageTexture"), 0)
@@ -93,11 +92,7 @@ class App:
             # refresh screen
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glUseProgram(self.shader)
-
-            if self.frame_counter % 10 == 0:
-                self.test_tex1.use()
-            else:
-                self.test_tex2.use()
+            self.test_tex.use()
 
             # Render to the left half of the screen
             glViewport(0, 0, SCREEN_WIDTH // 2, SCREEN_HEIGHT)
@@ -131,6 +126,7 @@ class App:
         """ Cleanup the app, run exit code """
         glDeleteBuffers(3, (self.triangle_vbo, self.quad_ebo, self.quad_vbo))
         glDeleteVertexArrays(2, (self.triangle_vao, self.quad_vao))
+        self.test_tex.destroy()
         glDeleteProgram(self.shader)
         glfw.destroy_window(self.window)
         glfw.terminate()
