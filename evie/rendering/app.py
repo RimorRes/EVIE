@@ -4,6 +4,8 @@ from evie.core.config import *
 from evie.rendering.engine import *
 from evie.rendering.scene import Scene
 
+__all__ = ['App']
+
 
 class App:
 

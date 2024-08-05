@@ -1,6 +1,8 @@
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 
+__all__ = ['Shader']
+
 
 def create_shader_module(filepath: str, module_type: int) -> int:
     """

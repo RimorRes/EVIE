@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ['vertex']
+
 # Vertex data type
 vertex = np.dtype({
     'names': ['x', 'y', 'z', 's', 't'],
