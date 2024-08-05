@@ -3,6 +3,8 @@ from OpenGL.GL import *
 import evie.core.datatypes as dt
 from evie.utils import load_mesh
 
+__all__ = ['Mesh', 'Quad', 'ObjMesh']
+
 
 class Mesh:
     """
@@ -117,10 +119,10 @@ class Quad(Mesh):
     def __init__(self):
 
         vertex_data = np.zeros(4, dtype=dt.vertex)
-        vertex_data[0] = (-0.5, 0.5, 0.0, 0.0, 1.0)
-        vertex_data[1] = (-0.5, -0.5, 0.0, 0.0, 0.0)
-        vertex_data[2] = (0.5, -0.5, 0.0, 1.0, 0.0)
-        vertex_data[3] = (0.5, 0.5, 0.0, 1.0, 1.0)
+        vertex_data[0] = (-0.5, -0.5, 0.0, 0.0, 0.0)
+        vertex_data[1] = (0.5, -0.5, 0.0, 1.0, 0.0)
+        vertex_data[2] = (0.5, 0.5, 0.0, 1.0, 1.0)
+        vertex_data[3] = (-0.5, 0.5, 0.0, 0.0, 1.0)
 
         index_data = np.array((0, 1, 2, 2, 3, 0), dtype=np.ubyte)
 

@@ -1,6 +1,8 @@
 from PIL import Image
 from OpenGL.GL import *
 
+__all__ = ['Material']
+
 
 class Material:
 

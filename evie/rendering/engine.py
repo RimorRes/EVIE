@@ -9,6 +9,7 @@ from evie.objects.camera import Camera
 from evie.utils import perspective_projection_matrix
 
 # TODO: SWITCH TO GLM!
+__all__ = ['GraphicsEngine']
 
 
 class GraphicsEngine:
@@ -61,8 +62,12 @@ class GraphicsEngine:
         shader.use()
         glUniform1i(glGetUniformLocation(shader.program, "imageTexture"), 0)
 
-        perspective_projection = perspective_projection_matrix(67.0, (SCREEN_WIDTH//2) / SCREEN_HEIGHT, 0.1, 100.0)
-        glUniformMatrix4fv(glGetUniformLocation(shader.program, "projection"), 1, GL_FALSE, perspective_projection)
+        aspect = (SCREEN_WIDTH//2) / SCREEN_HEIGHT
+        perspective_projection = perspective_projection_matrix(67.0, aspect, 0.1, 100.0)
+        glUniformMatrix4fv(
+            glGetUniformLocation(shader.program, "projection"),
+            1, GL_FALSE, perspective_projection
+        )
 
     def _get_uniform_locations(self) -> None:
         # TODO: Allow for multiple shaders
@@ -91,7 +96,10 @@ class GraphicsEngine:
                 glViewport(SCREEN_WIDTH//2, 0, SCREEN_WIDTH//2, SCREEN_HEIGHT)
 
             # Set view matrix
-            glUniformMatrix4fv(shader.get_single_location(UNIFORM_TYPE["VIEW"]), 1, GL_FALSE, camera.view_matrix)
+            glUniformMatrix4fv(
+                shader.get_single_location(UNIFORM_TYPE["VIEW"]),
+                1, GL_FALSE, camera.view_matrix
+            )
 
             for ent_type, entities in renderables.items():
                 if ent_type not in self.materials:
@@ -106,9 +114,15 @@ class GraphicsEngine:
 
                 for entity in entities:
                     # Set model matrix
-                    glUniformMatrix4fv(shader.get_single_location(UNIFORM_TYPE["MODEL"]), 1, GL_FALSE, entity.model_matrix)
+                    glUniformMatrix4fv(
+                        shader.get_single_location(UNIFORM_TYPE["MODEL"]),
+                        1, GL_FALSE, entity.model_matrix
+                    )
                     # Set base color
-                    glUniform4fv(shader.get_single_location(UNIFORM_TYPE["BASE_COLOR"]), 1, color)
+                    glUniform4fv(
+                        shader.get_single_location(UNIFORM_TYPE["BASE_COLOR"]),
+                        1, color
+                    )
 
                     mesh.draw()
 

@@ -3,6 +3,8 @@ from .entity import Entity
 from evie.core.config import GLOBAL_Y
 from evie.utils import normalize
 
+__all__ = ['Camera']
+
 
 class Camera(Entity):
 

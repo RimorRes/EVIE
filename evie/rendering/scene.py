@@ -3,6 +3,8 @@ from evie.core.config import *
 from evie.objects.entity import Entity, Cube
 from evie.objects.camera import Camera
 
+__all__ = ['Scene']
+
 
 class Scene:
     """
