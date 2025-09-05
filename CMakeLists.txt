@@ -3,4 +3,6 @@ project(EVIE)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(EVIE src/main.cpp)
+add_executable(EVIE
+        src/evie.cpp
+        include/evie.h)
