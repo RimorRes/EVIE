@@ -1,4 +1,8 @@
-![EVIE Logo](https://github.com/RimorRes/EVIE/assets/53187347/cdf04e2f-5ea5-4ac3-a495-df8354b792df)
+![EVIE Logo](https://github.com/RimorRes/EVIE/blob/main/data/Logotype.png?raw=true)
 
 # EVIE
-Software suite for AR headsets and HUDS.
+Software suite for Spectre AR headsets.
+- HUD
+- Hardware Control
+- Signal Processing
+- Audio Control
