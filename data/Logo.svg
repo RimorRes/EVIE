@@ -1,0 +1,45 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_46_57)">
+<mask id="mask0_46_57" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="34" y="34" width="188" height="188">
+<ellipse cx="127.999" cy="128" rx="93.702" ry="93.7025" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_46_57)">
+<path d="M72.4028 -34.4175L142.731 87.3957H2.07426L72.4028 -34.4175Z" fill="#E3E3E3"/>
+</g>
+<mask id="mask1_46_57" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="34" y="34" width="188" height="188">
+<ellipse cx="93.7023" cy="93.7021" rx="93.7023" ry="93.7021" transform="matrix(0.499998 0.866026 -0.866024 0.500002 162.297 0.00012207)" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask1_46_57)">
+<path d="M240.858 -1.3569L170.53 120.456L100.201 -1.35692L240.858 -1.3569Z" fill="#E3E3E3"/>
+</g>
+<mask id="mask2_46_57" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="34" y="34" width="188" height="188">
+<ellipse cx="93.7023" cy="93.7021" rx="93.7023" ry="93.7021" transform="matrix(-0.499998 0.866026 -0.866024 -0.500002 255.999 93.7025)" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask2_46_57)">
+<path d="M296.455 161.061L155.798 161.061L226.127 39.2474L296.455 161.061Z" fill="#E3E3E3"/>
+</g>
+<mask id="mask3_46_57" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="34" y="34" width="188" height="188">
+<ellipse cx="128.001" cy="128" rx="93.702" ry="93.7025" transform="rotate(180 128.001 128)" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask3_46_57)">
+<path d="M183.597 290.417L113.269 168.604H253.926L183.597 290.417Z" fill="#E3E3E3"/>
+</g>
+<mask id="mask4_46_57" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="34" y="34" width="188" height="188">
+<ellipse cx="93.7023" cy="93.7021" rx="93.7023" ry="93.7021" transform="matrix(-0.499998 -0.866026 0.866024 -0.500002 93.7033 256)" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask4_46_57)">
+<path d="M15.1418 257.357L85.4704 135.544L155.799 257.357L15.1418 257.357Z" fill="#E3E3E3"/>
+</g>
+<mask id="mask5_46_57" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="34" y="34" width="188" height="188">
+<ellipse cx="93.7023" cy="93.7021" rx="93.7023" ry="93.7021" transform="matrix(0.499998 -0.866026 0.866024 0.500002 0.000671387 162.297)" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask5_46_57)">
+<path d="M-40.4554 94.9394L100.202 94.9394L29.8732 216.753L-40.4554 94.9394Z" fill="#E3E3E3"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_46_57">
+<rect width="256" height="256" fill="white"/>
+</clipPath>
+</defs>
+</svg>
