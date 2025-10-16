@@ -5,4 +5,5 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(EVIE
         src/evie.cpp
-        include/evie.h)
+)
+target_include_directories(${PROJECT_NAME} PRIVATE /include)
